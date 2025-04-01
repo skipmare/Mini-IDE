@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include "set"
+#include "queue"
 using namespace std;
 #include "iostream"
 
@@ -52,9 +54,6 @@ public:
     std::multimap<std::string, ENFA_state *> get_alltransitions() {
         if (this == nullptr) {
             throw std::runtime_error("Attempted to call get_alltransitions on a null ENFA_state pointer");
-        }
-        else{
-            std::cout << "Name: " <<  this->name<< '\n';
         }
         return transitions;
     }
@@ -149,27 +148,51 @@ public:
         }
     }
 
-    bool accepts(std::string input, ENFA_state* current_state = nullptr) {
-        if (current_state == nullptr) {
-            current_state = start_state;
-        }
+    bool accepts(const std::string& input) {
+        // Use a queue for BFS traversal
+        std::queue<std::pair<ENFA_state*, std::string>> queue;
 
-        if (input.empty() && current_state->is_final_state()) {
-            return true;
-        }
+        // To prevent revisiting the same state with the same remaining input
+        std::set<std::pair<std::string, std::string>> visited;
 
-        for (auto transition : current_state->get_alltransitions()) {
-            if (transition.first == eps) {
-                if (accepts(input, transition.second)) {
-                    return true;
+        // Start with the initial state
+        queue.push({start_state, input});
+
+        while (!queue.empty()) {
+            auto [current_state, remaining_input] = queue.front();
+            queue.pop();
+
+            // Create a unique identifier for this state and input combination
+            std::string state_id = current_state->get_name();
+            std::pair<std::string, std::string> state_input_pair = {state_id, remaining_input};
+
+            // Skip if we've already processed this state with this remaining input
+            if (visited.find(state_input_pair) != visited.end()) {
+                continue;
+            }
+
+            // Mark as visited
+            visited.insert(state_input_pair);
+
+            // Check if we've reached an accepting state with no input left
+            if (remaining_input.empty() && current_state->is_final_state()) {
+                return true;
+            }
+
+            // Process all transitions from the current state
+            for (auto transition : current_state->get_alltransitions()) {
+                // For epsilon transitions, don't consume any input
+                if (transition.first == eps) {
+                    queue.push({transition.second, remaining_input});
                 }
-            } else if (!input.empty() && transition.first == std::string(1, input[0])) {
-                if (accepts(input.substr(1), transition.second)) {
-                    return true;
+                    // For character transitions, check if we can consume the next character
+                else if (!remaining_input.empty() && transition.first == std::string(1, remaining_input[0])) {
+                    queue.push({transition.second, remaining_input.substr(1)});
                 }
             }
         }
 
+        // If we've exhausted all possibilities without accepting, reject
         return false;
     }
 
