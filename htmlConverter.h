@@ -22,7 +22,7 @@ public:
     void addNewline();
 
     void saveFile();
-
+    std::string escapeHTML(const std::string &text);
 private:
     std::string filename;
     std::string htmlContent;

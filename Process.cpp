@@ -1,84 +1,96 @@
 #include "Process.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <stack>
 
-Process::Process(vector<Group *> groups, string inputFileName): groups(std::move(groups)) {
+using namespace std;
+
+Process::Process(vector<Group *> groups, string inputFileName) : groups(std::move(groups)) {
+    cout << "[INFO] Starting Process constructor..." << endl;
+
     ifstream inputFile(inputFileName);
-    HTMLWriter output("output.html");
+    if (!inputFile) {
+        cerr << "[ERROR] Unable to open input file: " << inputFileName << endl;
+        return;
+    } else {
+        cout << "[INFO] Successfully opened input file: " << inputFileName << endl;
+    }
 
-    vector<ENFA> enfas = {};
-    for(auto group: getGroups()){
-        if(group->getRegex().empty()){
-            cerr << "No regex for group " + group->getName() << endl;
+    HTMLWriter output("output.html");
+    cout << "[INFO] Initialized HTMLWriter for output.html" << endl;
+
+    vector<ENFA> enfas;
+    cout << "[INFO] Processing groups..." << endl;
+    for (auto group : getGroups()) {
+        cout << "[INFO] Processing group: " << group->getName() << endl;
+
+        if (group->getRegex().empty()) {
+            cerr << "[WARNING] No regex for group " << group->getName() << endl;
+            continue;
         }
+
+        cout << "[INFO] Converting regex to ENFA for group: " << group->getName() << endl;
         RE GroupRegex(group->getRegex());
         ENFA GroupNFA = GroupRegex.toENFA();
         enfas.push_back(GroupNFA);
     }
 
-    if (!inputFile) {
-        cerr << "Error: Unable to open file " << inputFileName << endl;
-        return;
-    }
-    // Get word tokens
+    cout << "[INFO] Reading input file and tokenizing words..." << endl;
     string line;
     vector<vector<string>> lines;
     while (getline(inputFile, line)) {
+        cout << "[DEBUG] Read line: " << line << endl;
+
         vector<string> words;
         istringstream stream(line);
         string word;
         while (stream >> word) {
+            cout << "[DEBUG] Tokenized word: " << word << endl;
             words.push_back(word);
         }
         lines.push_back(words);
     }
-    /*
-    vector<string> openbrackets = {"(","{","[",};
-    vector<string> closedbrackets = {")","}","]"};
-    stack<string> bracketstack;
-     */
-    for(auto line: lines){
-        for (const auto& word: line) {
-            /*
-            bool isOpenBracket = find(openbrackets.begin(), openbrackets.end(), word) != openbrackets.end();
-            bool isClosedBracket = find(closedbrackets.begin(), closedbrackets.end(), word) != closedbrackets.end();
-            if(isOpenBracket){
-                bracketstack.push(word);
-            }
-            else if(isClosedBracket){
-                if(bracketstack.top() == "(" && word == ")"){
-                    bracketstack.pop();
-                }
-            }
-            */
+    inputFile.close();
+    cout << "[INFO] Finished reading input file." << endl;
+
+    cout << "[INFO] Processing words..." << endl;
+    for (const auto& line : lines) {
+        for (const auto& word : line) {
+            cout << "[DEBUG] Checking word: " << word << endl;
             bool isAccepted = false;
             Group* g = nullptr;
-            for(int index = 0; index < enfas.size(); index++) {
+
+            for (size_t index = 0; index < enfas.size(); index++) {
                 g = getGroups()[index];
-                //isAccepted is false by default
-                //check if word is accepted
-                if (enfas[index].accepts(word) == 1) {
+
+                cout << "[DEBUG] Checking if ENFA accepts word: " << word << " for group " << g->getName() << endl;
+                if (enfas[index].accepts(word)) {
+                    cout << "[INFO] Word '" << word << "' accepted by group: " << g->getName() << endl;
                     isAccepted = true;
                     break;
                 }
             }
-            if(g) {
+
+            if (g) {
                 if (isAccepted) {
-                    cout << "Accepted " << word << endl;
+                    cout << "[SUCCESS] Writing styled text: " << word << endl;
                     output.writeStyledText(word, g->getColor(), g->getFontWeight());
-                    cout << "Printed " << word << " in style" << endl;
                 } else {
-                    cout << "Not accepted " << word << endl;
+                    cout << "[INFO] Writing plain text: " << word << endl;
                     output.writePlainText(word);
-                    cout << "Printer " << word << " plain" << endl;
                 }
+            } else {
+                cerr << "[ERROR] No valid group found for word: " << word << endl;
             }
-            else{
-                cerr << "No group found" << endl;
-            }
-            output.saveFile();
         }
         output.addNewline();
     }
-    inputFile.close();
+
+    cout << "[INFO] Saving HTML file..." << endl;
+    output.saveFile();
+    cout << "[SUCCESS] HTML file 'output.html' saved successfully!" << endl;
 }
 
 const vector<Group *> &Process::getGroups() const {
