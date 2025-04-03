@@ -87,13 +87,6 @@ int main(int argc, char const* argv[])
                 Group* group = new Group(groupName, RE, color, fontWeight);
                 groups.push_back(group);
             }
-            //cout << groups.size() << endl;
-//            for (auto group : groups) {
-//                cout << "Group: " << group->getName() << std::endl;
-//                cout << "RE: " << group->getRegex() << std::endl;
-//                cout << "Color: " << group->getColor() << std::endl;
-//                cout << "Font Weight: " << group->getFontWeight() << std::endl;
-//            }
             Process process(groups, "input.txt");
         }
     }
