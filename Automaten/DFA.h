@@ -15,6 +15,7 @@
 #include "State.h"
 #include "RE.h"
 #include "State.h"
+#include <algorithm>
 
 using json = nlohmann::json;
 
@@ -57,7 +58,7 @@ public:
 
     State* findName(vector<State>& states, const string& name);
 
-    Regex toRE();
+    RE toRE();
 
     string stateEliminationMethod(vector<State> &states, State *start, State *accept);
 

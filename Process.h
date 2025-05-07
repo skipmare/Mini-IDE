@@ -8,8 +8,8 @@
 #include <sstream>
 #include <algorithm>
 #include <stack>
-#include "RE.cpp"
-#include "Automaten/DFAtoRE/ENFA.h"
+#include "Automaten/RE.cpp"
+#include "Automaten/ENFA.h"
 #include "htmlConverter.h"
 #include "Group.h"
 #include "htmlConverter.h"

@@ -3,7 +3,6 @@
 //
 
 #include "DFA.h"
-#include <algorithm>
 
 using namespace std;
 
@@ -654,8 +653,8 @@ string DFA::unionRegex(const string& r1, const string& r2) {
     }
 
 }
-
-Regex DFA::toRE() {
+/*
+regex DFA::toRE() {
     ifstream input(filename);
     json j;
     input >> j;
@@ -695,9 +694,8 @@ Regex DFA::toRE() {
             accepts.push_back(&state);
         }
     }
-    Regex r;
+    std::string finalRegex;
     if (start && !accepts.empty()) {
-        string finalRegex;
         for (State* accept : accepts) {
             string regex = stateEliminationMethod(states, start, accept);
             if (finalRegex.empty()) {
@@ -706,7 +704,8 @@ Regex DFA::toRE() {
                 finalRegex = unionRegex(finalRegex, regex);
             }
         }
-        r.expression = finalRegex;
     }
+    RE r = Regex(finalRegex);
     return r;
 }
+*/
